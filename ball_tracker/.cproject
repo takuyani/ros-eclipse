@@ -182,8 +182,6 @@
 									<listOptionValue builtIn="false" value="pcl_tracking"/>
 									<listOptionValue builtIn="false" value="pcl_visualization"/>
 									<listOptionValue builtIn="false" value="pcl_sample_consensus"/>
-
-
 									<listOptionValue builtIn="false" value="boost_system"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1177014854" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
