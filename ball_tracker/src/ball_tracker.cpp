@@ -15,7 +15,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/sac_segmentation.h>
@@ -36,7 +36,7 @@ using namespace message_filters;
  */
 BallTracker::BallTracker(ros::NodeHandle &aNh) :
 		mNh(aNh), mIt(aNh), mSubImage(aNh, ros::names::remap(TOPIC_IN_IMAGE), 1), mSubPointCloud2(aNh,
-				ros::names::remap(TOPIC_IN_POINTS2), 1) {
+				ros::names::remap(TOPIC_IN_POINTS2), 1), mSync(syncPolicyT(10), mSubImage, mSubPointCloud2) {
 
 	constexpr uint8_t LOWER_H_DEF = 0;	// Lower Hue
 	constexpr uint8_t LOWER_S_DEF = 0;	// Lower Saturation
@@ -83,10 +83,9 @@ BallTracker::BallTracker(ros::NodeHandle &aNh) :
 	ROS_INFO_STREAM("subscribe_points2: " + ros::names::remap(TOPIC_IN_POINTS2));
 //	mSubPoints = mNh.subscribe(ros::names::remap(TOPIC_IN_POINTS2), 1, &BallTracker::callback_point_cloud, this);
 
-	mSync_uptr.reset(new synchronizerT(syncPolicyT(10), mSubImage, mSubPointCloud2));
-	mSync_uptr->registerCallback(boost::bind(&BallTracker::callbackExactTime, this, _1, _2));
+	mSync.registerCallback(boost::bind(&BallTracker::callbackExactTime, this, _1, _2));
 
-	ROS_INFO_STREAM("advertise: " + ros::names::remap(TOPIC_OUT_IMAGE) );
+	ROS_INFO_STREAM("advertise: " + ros::names::remap(TOPIC_OUT_IMAGE));
 	mImagePub = mIt.advertise(TOPIC_OUT_IMAGE, 1);
 
 }
@@ -106,7 +105,7 @@ BallTracker::~BallTracker() {
 void BallTracker::publishTest() {
 }
 
-void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr, const PointCloud2ConstPtr &aPoints_cptr) {
+void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr, const PointCloud2ConstPtr &aSmPc2) {
 	std_msgs::String str;
 	str.data = "Ball Tracker Test";
 
@@ -114,14 +113,15 @@ void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr, const PointC
 
 	pcl::PointCloud<pcl::PointXYZ> cld;
 
-	sensor_msgs::PointCloud2::Ptr pc2_ptr;
 	pcl::PCLPointCloud2 pcl_pc2;
-	pcl_conversions::toPCL(*pc2_ptr, pcl_pc2);
+	pcl_conversions::toPCL(*aSmPc2, pcl_pc2);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::fromPCLPointCloud2(pcl_pc2,*temp_cloud);
+	pcl::fromPCLPointCloud2(pcl_pc2, *temp_cloud);
 
 	// Create the segmentation object
-	pcl::SACSegmentation < pcl::PointXYZ > seg;
+	pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+
 //	// Optional
 //	seg.setOptimizeCoefficients(true);
 //	// Mandatory
@@ -152,10 +152,6 @@ void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr, const PointC
 //			cld_ptr->points[inlierIndices.indices[m]].b = 0;
 //		}
 //	}
-
-
-
-
 
 	cv_bridge::CvImagePtr cvImgPtr_RGB8, cvImgPtr_MONO8;
 	try {
@@ -219,6 +215,6 @@ void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr, const PointC
 	 //	cv::waitKey(3);
 	 */
 	// エッジ画像をパブリッシュ。OpenCVからROS形式にtoImageMsg()で変換。
-//	mImagePub.publish(cvImgPtr_MONO8->toImageMsg());
+	mImagePub.publish(cvImgPtr_MONO8->toImageMsg());
 }
 

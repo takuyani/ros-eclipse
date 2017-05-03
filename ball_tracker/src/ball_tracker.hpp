@@ -51,7 +51,6 @@ public:
 
 	const std::string PARAM_NAME_DEPTH = "th_depth";
 
-
 	//***** Constructor, Destructor *****
 	BallTracker(ros::NodeHandle&);
 	virtual ~BallTracker();
@@ -71,9 +70,6 @@ private:
 	//***** Method *****
 	void callbackExactTime(const sensor_msgs::ImageConstPtr&, const sensor_msgs::PointCloud2ConstPtr&);
 
-	void callback_A(const sensor_msgs::ImageConstPtr&, const sensor_msgs::PointCloud2::ConstPtr&);
-
-
 	//***** Member Variable *****
 	ros::NodeHandle mNh;				//!< ROS node handle
 	image_transport::ImageTransport mIt;
@@ -82,13 +78,11 @@ private:
 
 	ros::Publisher mPubTest;			//!< ROS Publisher(for Test)
 
-
-	using	syncPolicyT = message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
-	using	synchronizerT = message_filters::Synchronizer<syncPolicyT>;
-	std::unique_ptr<synchronizerT>	mSync_uptr;
-
-	message_filters::Subscriber<sensor_msgs::Image>			mSubImage;
-	message_filters::Subscriber<sensor_msgs::PointCloud2>	mSubPointCloud2;
+	message_filters::Subscriber<sensor_msgs::Image> mSubImage;
+	message_filters::Subscriber<sensor_msgs::PointCloud2> mSubPointCloud2;
+	using syncPolicyT = message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
+	using synchronizerT = message_filters::Synchronizer<syncPolicyT>;
+	synchronizerT mSync;
 
 };
 
