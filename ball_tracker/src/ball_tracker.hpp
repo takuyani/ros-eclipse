@@ -25,6 +25,9 @@
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <ball_tracker/BallTrackerConfig.h>
+
 //My Library
 
 /**
@@ -60,6 +63,9 @@ public:
 
 private:
 	//***** User Define *****
+	// Dynamic reconfigure
+	using	BTConfig = ball_tracker::BallTrackerConfig;
+	using	ReconfigureServer = dynamic_reconfigure::Server<BTConfig>;
 
 	//***** Const Value *****
 	static constexpr int32_t HSV_CH = 3;	//!< HSV Channel
@@ -69,6 +75,7 @@ private:
 
 	//***** Method *****
 	void callbackExactTime(const sensor_msgs::ImageConstPtr&, const sensor_msgs::PointCloud2ConstPtr&);
+	void callbackConfig(BTConfig&, uint32_t);
 
 	//***** Member Variable *****
 	ros::NodeHandle mNh;				//!< ROS node handle
@@ -83,6 +90,10 @@ private:
 	using syncPolicyT = message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
 	using synchronizerT = message_filters::Synchronizer<syncPolicyT>;
 	synchronizerT mSync;
+
+	// Dynamic reconfigure
+	ReconfigureServer	mSrv;
+	ReconfigureServer::CallbackType	mCallBckTyp;
 
 };
 

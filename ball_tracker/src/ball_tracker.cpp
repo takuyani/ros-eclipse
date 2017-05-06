@@ -93,6 +93,9 @@ BallTracker::BallTracker(ros::NodeHandle &aNh) :
 	ROS_INFO_STREAM("advertise: " + ros::names::remap(TOPIC_OUT_IMAGE));
 	mImagePub = mIt.advertise(TOPIC_OUT_IMAGE, 1);
 
+	mCallBckTyp = boost::bind(&BallTracker::callbackConfig, this, _1, _2);
+	mSrv.setCallback(mCallBckTyp);
+
 }
 
 /**
@@ -224,3 +227,8 @@ void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr,
 	mImagePub.publish(cvImgPtr_MONO8->toImageMsg());
 }
 
+void BallTracker::callbackConfig(BTConfig &config, uint32_t level) {
+	ROS_INFO("Reconfigure Request: %d %f %s %s %d", config.int_param,
+			config.double_param, config.str_param.c_str(),
+			config.bool_param ? "True" : "False", config.size);
+}

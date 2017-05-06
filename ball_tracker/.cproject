@@ -28,6 +28,7 @@
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/pcl-1.7"/>
 									<listOptionValue builtIn="false" value="/usr/include/eigen3"/>
+									<listOptionValue builtIn="false" value="/home/takuya/catkin_ws/devel/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.796916955" name="その他のフラグ" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -std=c++11 -Wcast-align -Wcast-qual -Wconversion -Wctor-dtor-privacy -Wdisabled-optimization -Wdouble-promotion -Wfloat-equal -Winit-self -Winline -Wlogical-op -Wmissing-declarations -Wold-style-cast -Wnon-virtual-dtor -Woverloaded-virtual -Wpointer-arith -Wredundant-decls -Wreorder -Wshadow -Wsign-promo -Wunsafe-loop-optimizations -Wuseless-cast -Wwrite-strings -Wmultichar" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.2146919449" name="定義済みのシンボル (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -46,6 +47,7 @@
 								<option id="gnu.cpp.link.option.paths.1181729504" name="ライブラリー検索パス (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/lib"/>
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/lib/pkgconfig"/>
+									<listOptionValue builtIn="false" value="/usr/lib/x86_64-linux-gnu"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.2046850505" name="ライブラリー (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="MultiCameraPlugin"/>
@@ -63,6 +65,7 @@
 									<listOptionValue builtIn="false" value="cv_bridge"/>
 									<listOptionValue builtIn="false" value="depth_image_proc"/>
 									<listOptionValue builtIn="false" value="eigen_conversions"/>
+									<listOptionValue builtIn="false" value="dynamic_reconfigure_config_init_mutex"/>
 									<listOptionValue builtIn="false" value="geometric_shapes"/>
 									<listOptionValue builtIn="false" value="image_geometry"/>
 									<listOptionValue builtIn="false" value="image_proc"/>
@@ -183,6 +186,7 @@
 									<listOptionValue builtIn="false" value="pcl_visualization"/>
 									<listOptionValue builtIn="false" value="pcl_sample_consensus"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1177014854" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
