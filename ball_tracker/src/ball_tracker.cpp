@@ -189,14 +189,32 @@ void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr,
 	mNh.getParam(PARAM_NAME_UPPER_S, upperHSV[HSV_S]);
 	mNh.getParam(PARAM_NAME_UPPER_V, upperHSV[HSV_V]);
 
+	ROS_INFO("Param");
+	ROS_INFO(" HSV Hue        Max/Min: %d / %d", upperHSV[HSV_H],
+			lowerHSV[HSV_H]);
+	ROS_INFO(" HSV Saturation Max/Min: %d / %d", upperHSV[HSV_S],
+			lowerHSV[HSV_S]);
+	ROS_INFO(" HSV Value      Max/Min: %d / %d", upperHSV[HSV_V],
+			lowerHSV[HSV_V]);
+	ROS_INFO(" Size: %d", mCfg.size);
+
+	ROS_INFO("Config");
+	ROS_INFO(" HSV Hue        Max/Min: %d / %d", mCfg.th_upper_h,
+			mCfg.th_lower_h);
+	ROS_INFO(" HSV Saturation Max/Min: %d / %d", mCfg.th_upper_s,
+			mCfg.th_lower_s);
+	ROS_INFO(" HSV Value      Max/Min: %d / %d", mCfg.th_upper_v,
+			mCfg.th_lower_v);
+	ROS_INFO(" Size: %d", mCfg.size);
+
 	cv::Scalar lowerScalar, upperScalar;
-	lowerScalar.val[0] = lowerHSV[HSV_H];
-	lowerScalar.val[1] = lowerHSV[HSV_S];
-	lowerScalar.val[2] = lowerHSV[HSV_V];
+	lowerScalar.val[0] = mCfg.th_lower_h;
+	lowerScalar.val[1] = mCfg.th_lower_s;
+	lowerScalar.val[2] = mCfg.th_lower_v;
 	lowerScalar.val[3] = 0;
-	upperScalar.val[0] = upperHSV[HSV_H];
-	upperScalar.val[1] = upperHSV[HSV_S];
-	upperScalar.val[2] = upperHSV[HSV_V];
+	upperScalar.val[0] = mCfg.th_upper_h;
+	upperScalar.val[1] = mCfg.th_upper_s;
+	upperScalar.val[2] = mCfg.th_upper_v;
 	upperScalar.val[3] = 0;
 	cv::inRange(hsvImg, lowerScalar, upperScalar, maskImgMat);
 	maskImgMat.copyTo(cvImgPtr_MONO8->image);
@@ -227,8 +245,7 @@ void BallTracker::callbackExactTime(const ImageConstPtr &aImg_cptr,
 	mImagePub.publish(cvImgPtr_MONO8->toImageMsg());
 }
 
-void BallTracker::callbackConfig(BTConfig &config, uint32_t level) {
-	ROS_INFO("Reconfigure Request: %d %f %s %s %d", config.int_param,
-			config.double_param, config.str_param.c_str(),
-			config.bool_param ? "True" : "False", config.size);
+void BallTracker::callbackConfig(BTConfigT &aCfg, uint32_t aLevel) {
+
+	mCfg = aCfg;
 }

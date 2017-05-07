@@ -64,8 +64,10 @@ public:
 private:
 	//***** User Define *****
 	// Dynamic reconfigure
-	using	BTConfig = ball_tracker::BallTrackerConfig;
-	using	ReconfigureServer = dynamic_reconfigure::Server<BTConfig>;
+	using BTConfigT = ball_tracker::BallTrackerConfig;
+	using RecfgSrvT = dynamic_reconfigure::Server<BTConfigT>;
+	using syncPolicyT = message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
+	using syncT = message_filters::Synchronizer<syncPolicyT>;
 
 	//***** Const Value *****
 	static constexpr int32_t HSV_CH = 3;	//!< HSV Channel
@@ -74,8 +76,9 @@ private:
 	static constexpr int32_t HSV_V = 2;		//!< HSV Value Channel
 
 	//***** Method *****
-	void callbackExactTime(const sensor_msgs::ImageConstPtr&, const sensor_msgs::PointCloud2ConstPtr&);
-	void callbackConfig(BTConfig&, uint32_t);
+	void callbackExactTime(const sensor_msgs::ImageConstPtr&,
+			const sensor_msgs::PointCloud2ConstPtr&);
+	void callbackConfig(BTConfigT&, uint32_t);
 
 	//***** Member Variable *****
 	ros::NodeHandle mNh;				//!< ROS node handle
@@ -87,13 +90,12 @@ private:
 
 	message_filters::Subscriber<sensor_msgs::Image> mSubImage;
 	message_filters::Subscriber<sensor_msgs::PointCloud2> mSubPointCloud2;
-	using syncPolicyT = message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
-	using synchronizerT = message_filters::Synchronizer<syncPolicyT>;
-	synchronizerT mSync;
+	syncT mSync;
 
 	// Dynamic reconfigure
-	ReconfigureServer	mSrv;
-	ReconfigureServer::CallbackType	mCallBckTyp;
+	RecfgSrvT mSrv;
+	RecfgSrvT::CallbackType mCallBckTyp;
+	BTConfigT mCfg;						//!< Dynamic reconfigure instance
 
 };
 
