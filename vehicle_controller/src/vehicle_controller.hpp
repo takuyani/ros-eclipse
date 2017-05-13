@@ -11,7 +11,7 @@
 //C++ Standard Library
 #include <cstdint>
 #include <cmath>
-#include <memory>
+#include <vector>
 //C Standard Library
 //Add Install Library
 #include <geometry_msgs/Twist.h>
@@ -32,7 +32,7 @@ public:
 	//***** Const Value *****
 
 	//***** Constructor, Destructor *****
-	VehicleController(ros::NodeHandle &);
+	VehicleController(const ros::NodeHandle &, const uint32_t);
 	virtual ~VehicleController();
 
 	//***** Method *****
@@ -48,7 +48,7 @@ private:
 
 	//***** Const Value *****
 	const std::string TOPIC_NAME_TELEOP_CMD_VEL = "/cmd_vel";
-	const std::string PARAM_NAME_TELEOP_LINEAR  = "teleop/linear";
+	const std::string PARAM_NAME_TELEOP_LINEAR = "teleop/linear";
 	const std::string PARAM_NAME_TELEOP_ANGULAR = "teleop/angular";
 
 	const std::string TOPIC_NAME_CMD_VEL = "cmd_vel";
@@ -60,7 +60,7 @@ private:
 	static constexpr double RAD2DEG = 180.0 / M_PI;	//!< Radian to degree gain
 	static constexpr double DEG2RAD = M_PI / 180.0;	//!< Degree to radian gain
 
-	static constexpr int32_t WHEEL_NUM = 2;	//!< Number of Wheel
+	const uint32_t WHEEL_NUM;	//!< Number of Wheel
 
 	//***** Method *****
 	void callbackCmdVel(const geometry_msgs::Twist &);
@@ -79,13 +79,16 @@ private:
 	bool setStallDtctTh(const int32_t);
 
 	template<typename T>
-	void displayRosInfo(const T aIdealVal, const T aActualVal, const bool aIsRet, const std::string aSeqTypeName,
+	void displayRosInfo(const T aIdealVal, const T aActualVal,
+			const bool aIsRet, const std::string aSeqTypeName,
 			const std::string aUnit) {
 
 		if (aIsRet == true) {
 			ROS_INFO_STREAM("Sequence["<< aSeqTypeName <<"]");
-			ROS_INFO_STREAM("   Ideal  value = " << aIdealVal << "["<< aUnit <<"]");
-			ROS_INFO_STREAM("   Actual value = " << aActualVal << "["<< aUnit <<"]");
+			ROS_INFO_STREAM(
+					"   Ideal  value = " << aIdealVal << "["<< aUnit <<"]");
+			ROS_INFO_STREAM(
+					"   Actual value = " << aActualVal << "["<< aUnit <<"]");
 		} else {
 			ROS_ERROR_STREAM("Sequence["<< aSeqTypeName <<"]:Failure!");
 		}
@@ -97,7 +100,7 @@ private:
 	ros::Subscriber mSubCmdVel;			//!< ROS Subscriber "CMD_VEL"
 	ros::Subscriber mSubTeleOp;			//!< ROS Subscriber "CMD_VEL" for Teleop Twist
 
-	std::unique_ptr<Wheel> mWheel_uptr;	//!< Wheel Class pointer
+	Wheel mWheel;	//!< Wheel Class
 
 	/**
 	 *  Current motor status
@@ -106,7 +109,7 @@ private:
 	 * - 0x02: Deceleration.
 	 * - 0x03: Constant speed.
 	 */
-	std::array<uint8_t, WHEEL_NUM> mMotStatus;
+	std::vector<uint8_t> mMotStsVec;
 
 	/**
 	 *  Vehicle Controller active flag

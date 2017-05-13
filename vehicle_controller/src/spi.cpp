@@ -26,7 +26,8 @@
  *
  * @param[in]	*aDevice_ptr	Device file path.
  */
-Spi::Spi(const char* aDevice_ptr) {
+Spi::Spi(const char* aDevice_ptr) :
+		mDevice_ptr(aDevice_ptr) {
 	static constexpr int FD_DEF = -1;
 	static constexpr uint32_t SPEED_DEF = 500000;
 	static constexpr uint8_t BITS_DEF = 8;
@@ -36,7 +37,6 @@ Spi::Spi(const char* aDevice_ptr) {
 	static constexpr uint32_t CPOL_DEF = 0;
 
 	mFd = FD_DEF;
-	mDevice_ptr = aDevice_ptr;
 	mBits = BITS_DEF;
 	mSpeed_hz = SPEED_DEF;
 	mMode = MODE_DEF;

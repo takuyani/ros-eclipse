@@ -1,5 +1,5 @@
 /**
- * @brief		For wheel infomation management
+ * @brief		For wheel information management
  *
  * @file		wheel.hpp
  * @author		Takuya Niibori
@@ -11,9 +11,7 @@
 
 //C++ Standard Library
 #include <cstdint>
-#include <map>
 #include <vector>
-#include <array>
 #include <memory>
 //C Standard Library
 //Add Install Library
@@ -130,7 +128,7 @@ public:
 	//***** Const Value *****
 
 	//***** Constructor, Destructor *****
-	Wheel(int32_t);
+	Wheel(uint32_t);
 	virtual ~Wheel();
 
 	//***** Method *****
@@ -171,7 +169,7 @@ private:
 	 */
 	typedef struct {
 		int32_t mData;		//!< set Data by transfer
-		std::unique_ptr<const RegConfS> mRegConfS_uptr;		//!< L6470 Resisters Config pointer
+		std::unique_ptr<const RegConfS> mRegConfS_uptr;	//!< L6470 Resisters Config pointer
 
 	} HoldConfDataS;
 	using uint8VecT = std::vector<uint8_t>;
@@ -182,10 +180,12 @@ private:
 	using uint8Vec2CIterT = uint8Vec2T::const_iterator;
 
 	//***** Const Value *****
+	const uint32_t WHEEL_NUM;							//!< Number of wheels
+
 	static constexpr uint8_t BITS = 8;					//!< 8 Bit/Word
-	static constexpr int32_t CMD_BYTE_SIZE_MAX = 4;	//!< 4[Byte]
+	static constexpr int32_t CMD_BYTE_SIZE_MAX = 4;		//!< 4[Byte]
 	static constexpr int32_t BYTE_SIZE_8 = 8;			//!< 8[Byte]
-	static constexpr double TICK = 0.00000025;		//!< 250[ns]
+	static constexpr double TICK = 0.00000025;			//!< 250[ns]
 
 	/*
 	 *  define L6470 Resisters Config
@@ -283,8 +283,7 @@ private:
 	int32_t setKval(HoldConfDataS&, const RegConfS&, const int32_t);
 
 	//***** Member Variable *****
-	std::unique_ptr<Spi> mSpi_uptr;					//!< Spi Class pointer
-	uint32_t mWheelNum;								//!< Number of wheels
+	Spi mSpi;										//!< Spi Class
 	int32_t mMicroStepMode;							//!< Micro Step Mode
 	std::vector<HoldConfDataS> mHoldConfDataVec;	//!< Hold Config Data for Transfer
 };

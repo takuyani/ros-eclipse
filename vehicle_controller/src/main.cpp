@@ -18,6 +18,7 @@
 
 const std::string NODE_NAME = "vehicle_controller";
 const uint32_t LOOP_RATE_HZ = 10;
+const int32_t WHEEL_NUM = 2;	//<! Number of Wheel
 
 /**
  * @enum	StateT
@@ -43,7 +44,7 @@ int main(int argc, char **argv) {
 
 	ros::NodeHandle nh("~");
 
-	VehicleController vc(nh);
+	VehicleController vc(nh, WHEEL_NUM);
 
 	ros::Rate loopRate(LOOP_RATE_HZ);
 

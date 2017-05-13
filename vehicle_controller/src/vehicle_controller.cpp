@@ -7,9 +7,6 @@
  */
 
 //C++ Standard Library
-#include <vector>
-#include <array>
-#include <cmath>
 //C Standard Library
 //Add Install Library
 //My Library
@@ -25,15 +22,16 @@ using namespace sm_42byg011_25;
  *
  * @param[in]		aNh			Ros node handle.
  */
-VehicleController::VehicleController(ros::NodeHandle &aNh) {
+VehicleController::VehicleController(const ros::NodeHandle &aNh,
+		const uint32_t aWheelNum) :
+		WHEEL_NUM(aWheelNum), mNh(aNh), mWheel(aWheelNum) {
 
-	constexpr double WHEEL_RADIUS_DEF = 10.0;		// Wheel radius: 10.0[mm]
-	constexpr double TREAD_WIDTH_DEF = 10.0;		// Tread width: 10.0[mm]
+	constexpr double WHEEL_RADIUS_DEF = 10.0; 		// Wheel radius: 10.0[mm]
+	constexpr double TREAD_WIDTH_DEF = 10.0; 		// Tread width: 10.0[mm]
+	constexpr double TELEOP_LINEAR_DEF = 10.0; 		// Vehicle base linear: 10.0[mm/s]
+	constexpr double TELEOP_ANGULAR_DEF = 10.0; 	// Vehicle base angular: 10.0[deg/s]
 
-	constexpr double TELEOP_LINEAR_DEF = 10.0;	// Vehicle base linear: 10.0[mm/s]
-	constexpr double TELEOP_ANGULAR_DEF = 10.0;	// Vehicle base angular: 10.0[deg/s]
-
-	mNh = aNh;
+	mMotStsVec.resize(WHEEL_NUM);
 
 	if (mNh.hasParam(PARAM_NAME_WHE_RAD) == false) {
 		mNh.setParam(PARAM_NAME_WHE_RAD, WHEEL_RADIUS_DEF);
@@ -58,11 +56,11 @@ VehicleController::VehicleController(ros::NodeHandle &aNh) {
 		mNh.getParam(PARAM_NAME_DEBUG, mDoDebug);
 	}
 
-	mSubCmdVel = mNh.subscribe(TOPIC_NAME_CMD_VEL, 1, &VehicleController::callbackCmdVel, this);
-	mSubTeleOp = mNh.subscribe(TOPIC_NAME_TELEOP_CMD_VEL, 1, &VehicleController::callbackTeleOp, this);
+	mSubCmdVel = mNh.subscribe(TOPIC_NAME_CMD_VEL, 1,
+			&VehicleController::callbackCmdVel, this);
+	mSubTeleOp = mNh.subscribe(TOPIC_NAME_TELEOP_CMD_VEL, 1,
+			&VehicleController::callbackTeleOp, this);
 	mPubTest = mNh.advertise<std_msgs::String>("string_test", 1);
-
-	mWheel_uptr.reset(new Wheel(WHEEL_NUM));
 
 	if (mDoDebug == true) {
 		ROS_WARN_STREAM("Node \"Vehicle Controller\":Debug Mode Running!");
@@ -78,14 +76,14 @@ VehicleController::VehicleController(ros::NodeHandle &aNh) {
  * @return		bool
  * 				- true: success
  * 				- false: failure
- * @exception		none
+ * @exception	none
  */
 bool VehicleController::initVehicleController() {
 
 	bool isRet = true;
 
 	if (mDoDebug == false) {
-		isRet = mWheel_uptr->initWheel();
+		isRet = mWheel.initWheel();
 	}
 
 	return (isRet);
@@ -139,33 +137,39 @@ bool VehicleController::checkStatus(bool aIsUvLo) {
 
 		if (isAct == false) {
 			bool isHoldTrq = true;
-			mWheel_uptr->stopHard(isHoldTrq);
+			mWheel.stopHard(isHoldTrq);
 		}
 
-		bool isRet = mWheel_uptr->getStatus(statusVec);
+		bool isRet = mWheel.getStatus(statusVec);
 
 		if (isRet == true) {
 			isAct = true;
 			for (uint32_t i = 0; i < statusVec.size(); i++) {
 				if (isAct == true) {
 					Wheel::StatusS &sts = statusVec[i];
-					mMotStatus[i] = sts.mMotStatus;
+					mMotStsVec[i] = sts.mMotStatus;
 
 					isAct = false;
 					if (sts.mIsHiz == true) {
 						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Bridges high Z");
 					} else if ((aIsUvLo == true) && (sts.mIsUvLo == true)) {
-						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Under Voltage lock-out");
+						ROS_WARN_STREAM(
+								"L6740 Device["<<i<<"]:Under Voltage lock-out");
 					} else if (sts.mIsThWrn == true) {
-						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Thermal Warning detection");
+						ROS_WARN_STREAM(
+								"L6740 Device["<<i<<"]:Thermal Warning detection");
 					} else if (sts.mIsThSd == true) {
-						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Thermal Shutdown detection");
+						ROS_WARN_STREAM(
+								"L6740 Device["<<i<<"]:Thermal Shutdown detection");
 					} else if (sts.mIsOcd == true) {
-						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Over Current detection");
+						ROS_WARN_STREAM(
+								"L6740 Device["<<i<<"]:Over Current detection");
 					} else if (sts.mIsStepLossA == true) {
-						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Bridge A Stall detection");
+						ROS_WARN_STREAM(
+								"L6740 Device["<<i<<"]:Bridge A Stall detection");
 					} else if (sts.mIsStepLossB == true) {
-						ROS_WARN_STREAM("L6740 Device["<<i<<"]:Bridge B Stall detection");
+						ROS_WARN_STREAM(
+								"L6740 Device["<<i<<"]:Bridge B Stall detection");
 					} else {
 						isAct = true;
 					}
@@ -194,10 +198,10 @@ bool VehicleController::checkStatus(bool aIsUvLo) {
 bool VehicleController::initialSeq() {
 
 	constexpr double MAX_SPEED_DPS = 360;	// Max Speed[deg/s]
-	constexpr double MIN_SPEED_DPS = 0;	// Min Speed[deg/s]
+	constexpr double MIN_SPEED_DPS = 0;		// Min Speed[deg/s]
 	constexpr double ACC_DPSS = 360;		// Acceleration[deg/s^2]
 	constexpr double DEC_DPSS = 360;		// Deceleration[deg/s^2]
-	constexpr int32_t KVAL_HOLD = 0xFF;	// Kval Hold
+	constexpr int32_t KVAL_HOLD = 0xFF;		// Kval Hold
 	constexpr int32_t KVAL_RUN = 0xFF;		// Kval Run
 	constexpr int32_t KVAL_ACC = 0xFF;		// Kval Acceleration
 	constexpr int32_t KVAL_DEC = 0xFF;		// Kval Deceleration
@@ -264,7 +268,7 @@ bool VehicleController::recoverySeq() {
 
 	bool isRet = false;
 
-	if (mWheel_uptr->resetDevice() == true) {
+	if (mWheel.resetDevice() == true) {
 		if (initialSeq() == true) {
 			isRet = true;
 		}
@@ -313,12 +317,13 @@ void VehicleController::callbackTeleOp(const geometry_msgs::Twist &aTwistMsg) {
  * @return			none
  * @exception		none
  */
-void VehicleController::move(const double aLinear_mmps, const double aAngular_dps) {
+void VehicleController::move(const double aLinear_mmps,
+		const double aAngular_dps) {
 
 	constexpr double SPEED_RESOL_SPS = 0.015;		// SPEED resolution[step/s]
-	constexpr double SPEED_RESOL_DPS = SPEED_RESOL_SPS * DEG_P_STEP;	//  SPEED resolution[deg/s]
+	constexpr double SPEED_RESOL_DPS = SPEED_RESOL_SPS * DEG_P_STEP;//  SPEED resolution[deg/s]
 
-	double angular_rps = DEG2RAD * aAngular_dps;		// Vehicle Angular[rad/s]
+	double angular_rps = DEG2RAD * aAngular_dps;	// Vehicle Angular[rad/s]
 
 	double wheelRadius_mm = 0;
 	double treadWidth_mm = 0;
@@ -336,33 +341,38 @@ void VehicleController::move(const double aLinear_mmps, const double aAngular_dp
 	//  W  : vehicle angular velocity
 
 	vector<double> spdVec(WHEEL_NUM);	//[0]:right, [1]:left
-	spdVec[0] = RAD2DEG * (2 * aLinear_mmps + treadWidth_mm * angular_rps) / (2 * wheelRadius_mm);
-	spdVec[1] = RAD2DEG * (2 * aLinear_mmps - treadWidth_mm * angular_rps) / (2 * wheelRadius_mm);
+	spdVec[0] = RAD2DEG * (2 * aLinear_mmps + treadWidth_mm * angular_rps)
+			/ (2 * wheelRadius_mm);
+	spdVec[1] = RAD2DEG * (2 * aLinear_mmps - treadWidth_mm * angular_rps)
+			/ (2 * wheelRadius_mm);
 	spdVec[1] *= -1;
 
 	bool isRet;
 	if (mIsActive == true) {
-		if ((abs(spdVec[0]) < SPEED_RESOL_DPS) && (abs(spdVec[1]) < SPEED_RESOL_DPS)) {
+		if ((abs(spdVec[0]) < SPEED_RESOL_DPS)
+				&& (abs(spdVec[1]) < SPEED_RESOL_DPS)) {
 			if (mDoDebug == true) {
 				isRet = true;
 			} else {
 				bool isHoldTrq = true;
-				isRet = mWheel_uptr->stopSoft(isHoldTrq);
+				isRet = mWheel.stopSoft(isHoldTrq);
 			}
 			ROS_DEBUG_STREAM("Stop:");
 		} else {
 			if (mDoDebug == true) {
 				isRet = true;
 			} else {
-				isRet = mWheel_uptr->run(spdVec);
+				isRet = mWheel.run(spdVec);
 			}
-			ROS_DEBUG_STREAM("Run: <Linear = " << aLinear_mmps << "[mm/s], Angular = " << aAngular_dps << "[deg/s]> <Left Angle = " << spdVec[1] << "[deg/s], Right Angle = " << spdVec[0] << "[deg/s]>");
+			ROS_DEBUG_STREAM(
+					"Run: <Linear = " << aLinear_mmps << "[mm/s], Angular = " << aAngular_dps
+					<< "[deg/s]> <Left Angle = " << spdVec[1] << "[deg/s], Right Angle = " << spdVec[0] << "[deg/s]>");
 		}
 	}
 
 	if (isRet == false) {
 		bool isHoldTrq = true;
-		isRet = mWheel_uptr->stopHard(isHoldTrq);
+		isRet = mWheel.stopHard(isHoldTrq);
 		mIsActive = false;
 	}
 }
@@ -378,14 +388,15 @@ void VehicleController::move(const double aLinear_mmps, const double aAngular_dp
  */
 bool VehicleController::setMaxSpeed(const double aMaxSpd_dps) {
 
-	array<double, WHEEL_NUM> actMaxSpdAry;
+	double actMaxSpdAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actMaxSpdAry.size(); idx++) {
-		actMaxSpdAry[idx] = mWheel_uptr->setMaxSpeed(idx, aMaxSpd_dps);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actMaxSpdAry[idx] = mWheel.setMaxSpeed(idx, aMaxSpd_dps);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
-	displayRosInfo(aMaxSpd_dps, actMaxSpdAry[0], isRet, "set Max Speed", "deg/s");
+	displayRosInfo(aMaxSpd_dps, actMaxSpdAry[0], isRet, "set Max Speed",
+			"deg/s");
 
 	return (isRet);
 }
@@ -401,14 +412,15 @@ bool VehicleController::setMaxSpeed(const double aMaxSpd_dps) {
  */
 bool VehicleController::setMinSpeed(const double aMinSpd_dps) {
 
-	array<double, WHEEL_NUM> actMinSpdAry;
+	double actMinSpdAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actMinSpdAry.size(); idx++) {
-		actMinSpdAry[idx] = mWheel_uptr->setMinSpeed(idx, aMinSpd_dps);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actMinSpdAry[idx] = mWheel.setMinSpeed(idx, aMinSpd_dps);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
-	displayRosInfo(aMinSpd_dps, actMinSpdAry[0], isRet, "set Min Speed", "deg/s");
+	displayRosInfo(aMinSpd_dps, actMinSpdAry[0], isRet, "set Min Speed",
+			"deg/s");
 
 	return (isRet);
 }
@@ -424,12 +436,12 @@ bool VehicleController::setMinSpeed(const double aMinSpd_dps) {
  */
 bool VehicleController::setAcc(const double aAcc_dpss) {
 
-	array<double, WHEEL_NUM> actAccAry;
+	double actAccAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actAccAry.size(); idx++) {
-		actAccAry[idx] = mWheel_uptr->setAcc(idx, aAcc_dpss);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actAccAry[idx] = mWheel.setAcc(idx, aAcc_dpss);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aAcc_dpss, actAccAry[0], isRet, "set Acc", "deg/s^2");
 
@@ -447,12 +459,12 @@ bool VehicleController::setAcc(const double aAcc_dpss) {
  */
 bool VehicleController::setDec(const double aDec_dpss) {
 
-	array<double, WHEEL_NUM> actDecAry;
+	double actDecAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actDecAry.size(); idx++) {
-		actDecAry[idx] = mWheel_uptr->setDec(idx, aDec_dpss);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actDecAry[idx] = mWheel.setDec(idx, aDec_dpss);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aDec_dpss, actDecAry[0], isRet, "set Dec", "deg/s^2");
 
@@ -470,12 +482,12 @@ bool VehicleController::setDec(const double aDec_dpss) {
  */
 bool VehicleController::setKvalHold(const int32_t aKval) {
 
-	array<int32_t, WHEEL_NUM> actKvalAry;
+	int32_t actKvalAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actKvalAry.size(); idx++) {
-		actKvalAry[idx] = mWheel_uptr->setKvalHold(idx, aKval);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actKvalAry[idx] = mWheel.setKvalHold(idx, aKval);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aKval, actKvalAry[0], isRet, "set Kval(Hold)", "-");
 
@@ -493,12 +505,12 @@ bool VehicleController::setKvalHold(const int32_t aKval) {
  */
 bool VehicleController::setKvalRun(const int32_t aKval) {
 
-	array<int32_t, WHEEL_NUM> actKvalAry;
+	int32_t actKvalAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actKvalAry.size(); idx++) {
-		actKvalAry[idx] = mWheel_uptr->setKvalRun(idx, aKval);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actKvalAry[idx] = mWheel.setKvalRun(idx, aKval);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aKval, actKvalAry[0], isRet, "set Kval(Run)", "-");
 
@@ -516,12 +528,12 @@ bool VehicleController::setKvalRun(const int32_t aKval) {
  */
 bool VehicleController::setKvalAcc(const int32_t aKval) {
 
-	array<int32_t, WHEEL_NUM> actKvalAry;
+	int32_t actKvalAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actKvalAry.size(); idx++) {
-		actKvalAry[idx] = mWheel_uptr->setKvalAcc(idx, aKval);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actKvalAry[idx] = mWheel.setKvalAcc(idx, aKval);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aKval, actKvalAry[0], isRet, "set Kval(Acc)", "-");
 
@@ -539,12 +551,12 @@ bool VehicleController::setKvalAcc(const int32_t aKval) {
  */
 bool VehicleController::setKvalDec(const int32_t aKval) {
 
-	array<int32_t, WHEEL_NUM> actKvalAry;
+	int32_t actKvalAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actKvalAry.size(); idx++) {
-		actKvalAry[idx] = mWheel_uptr->setKvalDec(idx, aKval);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actKvalAry[idx] = mWheel.setKvalDec(idx, aKval);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aKval, actKvalAry[0], isRet, "set Kval(Dec)", "-");
 
@@ -563,12 +575,12 @@ bool VehicleController::setKvalDec(const int32_t aKval) {
  */
 bool VehicleController::setOcdTh(const int32_t aOcdTh) {
 
-	array<int32_t, WHEEL_NUM> actOcdThAry;
+	int32_t actOcdThAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actOcdThAry.size(); idx++) {
-		actOcdThAry[idx] = mWheel_uptr->setOvrCurrDtctTh(idx, aOcdTh);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actOcdThAry[idx] = mWheel.setOvrCurrDtctTh(idx, aOcdTh);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
 	displayRosInfo(aOcdTh, actOcdThAry[0], isRet, "set OCD Th", "mA");
 
@@ -587,14 +599,15 @@ bool VehicleController::setOcdTh(const int32_t aOcdTh) {
  */
 bool VehicleController::setStallDtctTh(const int32_t aStallDtctTh) {
 
-	array<int32_t, WHEEL_NUM> actStallDtctThAry;
+	int32_t actStallDtctThAry[WHEEL_NUM];
 
-	for (uint32_t idx = 0; idx < actStallDtctThAry.size(); idx++) {
-		actStallDtctThAry[idx] = mWheel_uptr->setOvrCurrDtctTh(idx, aStallDtctTh);
+	for (uint32_t idx = 0; idx < WHEEL_NUM; idx++) {
+		actStallDtctThAry[idx] = mWheel.setOvrCurrDtctTh(idx, aStallDtctTh);
 	}
-	bool isRet = mWheel_uptr->transferSetData();
+	bool isRet = mWheel.transferSetData();
 
-	displayRosInfo(aStallDtctTh, actStallDtctThAry[0], isRet, "set Stall Detection Th", "mA");
+	displayRosInfo(aStallDtctTh, actStallDtctThAry[0], isRet,
+			"set Stall Detection Th", "mA");
 
 	return (isRet);
 }

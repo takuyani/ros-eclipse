@@ -1,5 +1,5 @@
 /**
- * @brief		For wheel infomation management
+ * @brief		For wheel information management
  *
  * @file		wheel.cpp
  * @author		Takuya Niibori
@@ -48,17 +48,15 @@ using namespace sm_42byg011_25;
  *
  * @param[in]	aWheelNum	Number of wheels.
  */
-Wheel::Wheel(int32_t aWheelNum) {
+Wheel::Wheel(uint32_t aWheelNum) :
+		WHEEL_NUM(aWheelNum), mSpi("/dev/spidev1.0") {
 
 	constexpr int32_t MICRO_STEP_MODE_DEF = 7;		// 1/128 microstep
 
-	mSpi_uptr.reset(new Spi("/dev/spidev1.0"));
-	mWheelNum = aWheelNum;
-
 	mMicroStepMode = MICRO_STEP_MODE_DEF;
 
-	mHoldConfDataVec.resize(mWheelNum);
-	for (uint32_t i = 0; i < mWheelNum; i++) {
+	mHoldConfDataVec.resize(WHEEL_NUM);
+	for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 		mHoldConfDataVec[i].mRegConfS_uptr.release();
 	}
 }
@@ -83,12 +81,12 @@ bool Wheel::initWheel() {
 	constexpr uint32_t CPHA = 1;			// clock's rising edge capture
 	constexpr uint32_t CPOL = 1;			// Active Low
 
-	mSpi_uptr->setBits(BITS);
-	mSpi_uptr->setMaxSpeedHz(SPEED);
-	mSpi_uptr->setClockPhase(CPHA);
-	mSpi_uptr->setClockPolarity(CPOL);
+	mSpi.setBits(BITS);
+	mSpi.setMaxSpeedHz(SPEED);
+	mSpi.setClockPhase(CPHA);
+	mSpi.setClockPolarity(CPOL);
 
-	bool isRet = mSpi_uptr->initSpi();
+	bool isRet = mSpi.initSpi();
 
 	return (isRet);
 }
@@ -108,7 +106,7 @@ double Wheel::setMaxSpeed(const uint32_t aIdx, const double aMaxSpd_dps) {
 
 	double actPhyVal = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		HoldConfDataS &confData = mHoldConfDataVec[aIdx];
 		int32_t data = abs(static_cast<int32_t>(UNIT2RES_GAIN * aMaxSpd_dps));
 		confData.mRegConfS_uptr.reset(&MAX_SPEED);
@@ -138,7 +136,7 @@ double Wheel::setMinSpeed(const uint32_t aIdx, const double aMinSpd_dps) {
 
 	double actPhyVal = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		HoldConfDataS &confData = mHoldConfDataVec[aIdx];
 		int32_t data = abs(static_cast<int32_t>(UNIT2RES_GAIN * aMinSpd_dps));
 		confData.mRegConfS_uptr.reset(&MIN_SPEED);
@@ -164,11 +162,12 @@ double Wheel::setMinSpeed(const uint32_t aIdx, const double aMinSpd_dps) {
  */
 double Wheel::setAcc(const uint32_t aIdx, const double aAcc_dpss) {
 
-	constexpr double UNIT2RES_GAIN = pow(TICK, 2) * pow(2, ACC_LSB) / DEG_P_STEP;	// Convert Unit To Resister Value.
+	constexpr double UNIT2RES_GAIN = pow(TICK, 2) * pow(2, ACC_LSB)
+			/ DEG_P_STEP;	// Convert Unit To Resister Value.
 
 	double actPhyVal = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		HoldConfDataS &confData = mHoldConfDataVec[aIdx];
 		int32_t data = abs(static_cast<int32_t>(UNIT2RES_GAIN * aAcc_dpss));
 		confData.mRegConfS_uptr.reset(&ACC);
@@ -194,11 +193,12 @@ double Wheel::setAcc(const uint32_t aIdx, const double aAcc_dpss) {
  */
 double Wheel::setDec(const uint32_t aIdx, const double aDec_dpss) {
 
-	constexpr double UNIT2RES_GAIN = pow(TICK, 2) * pow(2, DEC_LSB) / DEG_P_STEP;	// Convert Unit To Resister Value.
+	constexpr double UNIT2RES_GAIN = pow(TICK, 2) * pow(2, DEC_LSB)
+			/ DEG_P_STEP;	// Convert Unit To Resister Value.
 
 	double actPhyVal = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		HoldConfDataS &confData = mHoldConfDataVec[aIdx];
 		int32_t data = abs(static_cast<int32_t>(UNIT2RES_GAIN * aDec_dpss));
 		confData.mRegConfS_uptr.reset(&DEC);
@@ -226,7 +226,7 @@ int32_t Wheel::setKvalHold(const uint32_t aIdx, const int32_t aVal) {
 
 	int32_t data = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		data = setKval(mHoldConfDataVec[aIdx], KVAL_HOLD, aVal);
 	}
 
@@ -246,7 +246,7 @@ int32_t Wheel::setKvalRun(const uint32_t aIdx, const uint32_t aVal) {
 
 	int32_t data = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		data = setKval(mHoldConfDataVec[aIdx], KVAL_RUN, aVal);
 	}
 
@@ -266,7 +266,7 @@ int32_t Wheel::setKvalAcc(const uint32_t aIdx, const uint32_t aVal) {
 
 	int32_t data = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		data = setKval(mHoldConfDataVec[aIdx], KVAL_ACC, aVal);
 	}
 
@@ -286,7 +286,7 @@ int32_t Wheel::setKvalDec(const uint32_t aIdx, const uint32_t aVal) {
 
 	int32_t data = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		data = setKval(mHoldConfDataVec[aIdx], KVAL_DEC, aVal);
 	}
 
@@ -309,7 +309,7 @@ int32_t Wheel::setOvrCurrDtctTh(const uint32_t aIdx, const int32_t aVal) {
 
 	int32_t actPhyVal = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		HoldConfDataS &confData = mHoldConfDataVec[aIdx];
 		int32_t data = abs(aVal);
 
@@ -341,7 +341,7 @@ double Wheel::setStallDtctTh(const uint32_t aIdx, const int32_t aVal) {
 
 	double actPhyVal = -1;
 
-	if (aIdx < mWheelNum) {
+	if (aIdx < WHEEL_NUM) {
 		HoldConfDataS &confData = mHoldConfDataVec[aIdx];
 		int32_t data = abs(aVal);
 
@@ -368,7 +368,7 @@ double Wheel::setStallDtctTh(const uint32_t aIdx, const int32_t aVal) {
 bool Wheel::transferSetData() {
 
 	constexpr int32_t RETRY_CNT = 3;	// Retry Count
-	uint8Vec2T transDataVec2(mWheelNum, uint8VecT(CMD_BYTE_SIZE_MAX, 0));
+	uint8Vec2T transDataVec2(WHEEL_NUM, uint8VecT(CMD_BYTE_SIZE_MAX, 0));
 
 	// construct Transfer Data
 	constructTransData(transDataVec2.begin());
@@ -382,7 +382,7 @@ bool Wheel::transferSetData() {
 
 /////////////////////////////////////////////////////////////////////
 //		uint8_t DBG_transData[2][4];
-//		for (uint32_t j = 0; j < mWheelNum; j++) {
+//		for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 //			for (int32_t k = 0; k < CMD_BYTE_SIZE_MAX; k++) {
 //				DBG_transData[j][k] = transData2d_vec[j][k];
 //			}
@@ -390,12 +390,12 @@ bool Wheel::transferSetData() {
 /////////////////////////////////////////////////////////////////////
 
 		// receive Data
-		uint8Vec2T rxVec2(mWheelNum, uint8VecT(CMD_BYTE_SIZE_MAX - 1, 0));
+		uint8Vec2T rxVec2(WHEEL_NUM, uint8VecT(CMD_BYTE_SIZE_MAX - 1, 0));
 		receiveData(transDataVec2.begin(), rxVec2.begin());
 
 /////////////////////////////////////////////////////////////////////
 //		uint8_t DBG_RcvData[2][3];
-//		for (uint32_t j = 0; j < mWheelNum; j++) {
+//		for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 //			for (int32_t k = 0; k < CMD_BYTE_SIZE_MAX-1; k++) {
 //				DBG_RcvData[j][k] = DBG_transData[j][k+1];
 //			}
@@ -406,7 +406,7 @@ bool Wheel::transferSetData() {
 		isVerify = verifyData(rxVec2.begin());
 	}
 
-	for (uint32_t i = 0; i < mWheelNum; i++) {
+	for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 		mHoldConfDataVec[i].mRegConfS_uptr.release();
 	}
 
@@ -428,11 +428,11 @@ bool Wheel::run(vector<double> &aSpdVec) {
 	constexpr uint32_t RUN_SIZE_MAX = 4;
 
 	bool isRet = false;
-	uint8_t data[mWheelNum][RUN_SIZE_MAX];
+	uint8_t data[WHEEL_NUM][RUN_SIZE_MAX];
 
-	if (mWheelNum <= aSpdVec.size()) {
+	if (WHEEL_NUM <= aSpdVec.size()) {
 
-		for (uint32_t i = 0; i < mWheelNum; i++) {
+		for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 			double spd_dps = aSpdVec.at(i);
 			uint8_t dir = 0;
 			if (0 < spd_dps) {
@@ -448,18 +448,19 @@ bool Wheel::run(vector<double> &aSpdVec) {
 
 			data[i][0] = CMD_RUN | dir;
 			for (uint32_t j = 1; j < RUN_SIZE_MAX; j++) {
-				data[i][j] = static_cast<uint8_t>(spdAbs >> (BITS * (RUN_SIZE_MAX - 1 - j)));
+				data[i][j] = static_cast<uint8_t>(spdAbs
+						>> (BITS * (RUN_SIZE_MAX - 1 - j)));
 			}
 		}
 
-		uint8_t tx[mWheelNum];
+		uint8_t tx[WHEEL_NUM];
 
 		// transfer Data
 		for (uint32_t i = 0; i < RUN_SIZE_MAX; i++) {
-			for (uint32_t j = 0; j < mWheelNum; j++) {
+			for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 				tx[j] = data[j][i];
 			}
-			mSpi_uptr->transfer(mWheelNum, tx);
+			mSpi.transfer(WHEEL_NUM, tx);
 		}
 		isRet = true;
 	}
@@ -487,12 +488,12 @@ bool Wheel::stopSoft(const bool aIsHoldTrq) {
 		txData = CMD_SOFT_HIZ;
 	}
 
-	uint8_t tx[mWheelNum];
-	for (uint32_t i = 0; i < mWheelNum; i++) {
+	uint8_t tx[WHEEL_NUM];
+	for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 		tx[i] = txData;
 	}
 
-	bool isRet = mSpi_uptr->transfer(mWheelNum, tx);
+	bool isRet = mSpi.transfer(WHEEL_NUM, tx);
 
 	return (isRet);
 }
@@ -517,12 +518,12 @@ bool Wheel::stopHard(const bool aIsHoldTrq) {
 		txData = CMD_HARD_HIZ;
 	}
 
-	uint8_t tx[mWheelNum];
-	for (uint32_t i = 0; i < mWheelNum; i++) {
+	uint8_t tx[WHEEL_NUM];
+	for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 		tx[i] = txData;
 	}
 
-	bool isRet = mSpi_uptr->transfer(mWheelNum, tx);
+	bool isRet = mSpi.transfer(WHEEL_NUM, tx);
 
 	return (isRet);
 }
@@ -538,12 +539,12 @@ bool Wheel::stopHard(const bool aIsHoldTrq) {
  */
 bool Wheel::resetDevice() {
 
-	uint8_t tx[mWheelNum];
-	for (uint32_t i = 0; i < mWheelNum; i++) {
+	uint8_t tx[WHEEL_NUM];
+	for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 		tx[i] = CMD_RESET_DEVICE;
 	}
 
-	bool isRet = mSpi_uptr->transfer(mWheelNum, tx);
+	bool isRet = mSpi.transfer(WHEEL_NUM, tx);
 
 	return (isRet);
 }
@@ -559,24 +560,25 @@ bool Wheel::resetDevice() {
  */
 bool Wheel::getStatus(vector<StatusS> &aStatusVec) {
 
-	uint8_t tx[STATUS.BYTE_SIZE][mWheelNum];
+	uint8_t tx[STATUS.BYTE_SIZE][WHEEL_NUM];
 	bool isRet = true;
 	for (int32_t i = 0; (i < STATUS.BYTE_SIZE) && (isRet == true); i++) {
-		for (uint32_t j = 0; j < mWheelNum; j++) {
+		for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 			if (i == 0) {
 				tx[i][j] = CMD_GET_STATUS;
 			} else {
 				tx[i][j] = CMD_NOP;
 			}
 		}
-		isRet = mSpi_uptr->transfer(mWheelNum, tx[i]);
+		isRet = mSpi.transfer(WHEEL_NUM, tx[i]);
 	}
 
-	if ((isRet == true) && (mWheelNum <= aStatusVec.size())) {
-		for (uint32_t i = 0; i < mWheelNum; i++) {
+	if ((isRet == true) && (WHEEL_NUM <= aStatusVec.size())) {
+		for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 			uint32_t status = 0;
 			for (int32_t j = 1; j < STATUS.BYTE_SIZE; j++) {
-				status |= tx[j][i] << ((STATUS.BYTE_SIZE - j - 1) * BYTE_SIZE_8);
+				status |= tx[j][i]
+						<< ((STATUS.BYTE_SIZE - j - 1) * BYTE_SIZE_8);
 			}
 			StatusS statusS;
 			if (0 != (status & STATUS_HIZ)) {
@@ -609,7 +611,8 @@ bool Wheel::getStatus(vector<StatusS> &aStatusVec) {
 				statusS.mIsDir = false;
 			}
 
-			statusS.mMotStatus = static_cast<uint8_t>((status & STATUS_MOT) >> 5);
+			statusS.mMotStatus =
+					static_cast<uint8_t>((status & STATUS_MOT) >> 5);
 
 			if (0 != (status & STATUS_NOT_PERF_CMD)) {
 				statusS.mIsNotPerfCmd = true;
@@ -681,7 +684,7 @@ bool Wheel::getStatus(vector<StatusS> &aStatusVec) {
  */
 void Wheel::constructTransData(uint8Vec2IterT aDataVec2_iter) {
 
-	for (uint32_t i = 0; i < mWheelNum; i++) {
+	for (uint32_t i = 0; i < WHEEL_NUM; i++) {
 		const uint8VecIterT transData_itr = aDataVec2_iter[i].begin();
 		const HoldConfDataS &holdConfData = mHoldConfDataVec[i];
 		const RegConfS *regConf_ptr = holdConfData.mRegConfS_uptr.get();
@@ -705,7 +708,8 @@ void Wheel::constructTransData(uint8Vec2IterT aDataVec2_iter) {
 			for (int32_t j = 1; j < CMD_BYTE_SIZE_MAX; j++) {
 				if (j < regConf_ptr->BYTE_SIZE) {
 					int32_t shift = regConf_ptr->BYTE_SIZE - j - 1;
-					transData_itr[j] = static_cast<uint8_t>(data >> (BYTE_SIZE_8 * shift));
+					transData_itr[j] = static_cast<uint8_t>(data
+							>> (BYTE_SIZE_8 * shift));
 				} else {
 					transData_itr[j] = CMD_NOP;
 				}
@@ -724,11 +728,11 @@ void Wheel::constructTransData(uint8Vec2IterT aDataVec2_iter) {
 void Wheel::transmitData(const uint8Vec2CIterT aTxVec2_citer) {
 
 	for (int32_t i = 0; i < CMD_BYTE_SIZE_MAX; i++) {
-		uint8_t tx[mWheelNum];
-		for (uint32_t j = 0; j < mWheelNum; j++) {
+		uint8_t tx[WHEEL_NUM];
+		for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 			tx[j] = aTxVec2_citer[j][i];
 		}
-		mSpi_uptr->transfer(mWheelNum, tx);
+		mSpi.transfer(WHEEL_NUM, tx);
 	}
 }
 
@@ -740,20 +744,21 @@ void Wheel::transmitData(const uint8Vec2CIterT aTxVec2_citer) {
  * @return			none
  * @exception		none
  */
-void Wheel::receiveData(const uint8Vec2CIterT aTxVec2_citer, uint8Vec2IterT aRxVec2_iter) {
+void Wheel::receiveData(const uint8Vec2CIterT aTxVec2_citer,
+		uint8Vec2IterT aRxVec2_iter) {
 
 	for (int32_t i = 0; i < CMD_BYTE_SIZE_MAX; i++) {
-		uint8_t tx[mWheelNum];
-		for (uint32_t j = 0; j < mWheelNum; j++) {
+		uint8_t tx[WHEEL_NUM];
+		for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 			if (i == 0) {
 				tx[j] = aTxVec2_citer[j][i] | CMD_GET_PARAM;
 			} else {
 				tx[j] = CMD_NOP;
 			}
 		}
-		mSpi_uptr->transfer(mWheelNum, tx);
+		mSpi.transfer(WHEEL_NUM, tx);
 		if (0 < i) {
-			for (uint32_t j = 0; j < mWheelNum; j++) {
+			for (uint32_t j = 0; j < WHEEL_NUM; j++) {
 				aRxVec2_iter[j][i - 1] = tx[j];
 			}
 		}
@@ -772,12 +777,13 @@ void Wheel::receiveData(const uint8Vec2CIterT aTxVec2_citer, uint8Vec2IterT aRxV
 bool Wheel::verifyData(const uint8Vec2CIterT aRxVec2_citer) {
 
 	bool isVerify = true;
-	for (uint32_t i = 0; i < mWheelNum && isVerify == true; i++) {
+	for (uint32_t i = 0; i < WHEEL_NUM && isVerify == true; i++) {
 		int32_t rxData = 0;
 		const HoldConfDataS &holdConfData = mHoldConfDataVec[i];
 		int32_t rxDataSize = holdConfData.mRegConfS_uptr->BYTE_SIZE - 1;
 		for (int32_t j = 0; j < rxDataSize; j++) {
-			rxData |= aRxVec2_citer[i][j] << ((rxDataSize - j - 1) * BYTE_SIZE_8);
+			rxData |= aRxVec2_citer[i][j]
+					<< ((rxDataSize - j - 1) * BYTE_SIZE_8);
 		}
 
 		int32_t txData = holdConfData.mData;
@@ -804,7 +810,8 @@ bool Wheel::verifyData(const uint8Vec2CIterT aRxVec2_citer) {
  * @exception		none
  */
 
-int32_t Wheel::setKval(HoldConfDataS &aConfData, const RegConfS &aRegConf, const int32_t aVal) {
+int32_t Wheel::setKval(HoldConfDataS &aConfData, const RegConfS &aRegConf,
+		const int32_t aVal) {
 
 	int32_t data = -1;
 
