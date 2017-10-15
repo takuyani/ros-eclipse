@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "wheel.hpp"
+#include "vehicle_controller/wheel.hpp"
 
 using namespace std;
 
