@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <cmath>
 
 #include "vehicle_controller/wheel.hpp"
 
@@ -35,6 +36,8 @@ void setKvalDec(Wheel&, const int32_t);
 void setOcdTh(Wheel &wheelObj, const int32_t);
 void setStallDtctTh(Wheel &wheelObj, const int32_t);
 
+constexpr double RAD2DEG = 180.0 / M_PI;	//!< Radian to degree gain
+constexpr double DEG2RAD = M_PI / 180.0;	//!< Degree to radian gain
 constexpr int32_t WHEEL_NUM_MAX = 2;
 
 int main(int argc, char **argv) {
@@ -246,7 +249,7 @@ void setMaxSpeed(Wheel &wheelObj, const double maxSpd_dps) {
 
 	double actMaxSpd[WHEEL_NUM_MAX];
 	for (uint32_t idx = 0; idx < WHEEL_NUM_MAX; idx++) {
-		actMaxSpd[idx] = wheelObj.setMaxSpeed(idx, maxSpd_dps);
+		actMaxSpd[idx] = wheelObj.setMaxSpeed(idx, maxSpd_dps * DEG2RAD);
 	}
 	bool isRet = wheelObj.transferSetData();
 	cout << " set Max Speed = " << maxSpd_dps << "[deg/s]: ";
@@ -265,7 +268,7 @@ void setMinSpeed(Wheel &wheelObj, const double minSpd_dps) {
 
 	volatile double actMinSpd[WHEEL_NUM_MAX];
 	for (uint32_t idx = 0; idx < WHEEL_NUM_MAX; idx++) {
-		actMinSpd[idx] = wheelObj.setMinSpeed(idx, minSpd_dps);
+		actMinSpd[idx] = wheelObj.setMinSpeed(idx, minSpd_dps * DEG2RAD);
 	}
 	bool isRet = wheelObj.transferSetData();
 	cout << " set Min Speed = " << minSpd_dps << "[deg/s]: ";
@@ -284,7 +287,7 @@ void setAcc(Wheel &wheelObj, const double aAcc_dpss) {
 
 	volatile double actAcc[WHEEL_NUM_MAX];
 	for (uint32_t idx = 0; idx < WHEEL_NUM_MAX; idx++) {
-		actAcc[idx] = wheelObj.setAcc(idx, aAcc_dpss);
+		actAcc[idx] = wheelObj.setAcc(idx, aAcc_dpss * DEG2RAD);
 	}
 	bool isRet = wheelObj.transferSetData();
 	cout << " set Acc = " << aAcc_dpss << "[deg/s^2]: ";
@@ -303,7 +306,7 @@ void setDec(Wheel &wheelObj, const double aDec_dpss) {
 
 	volatile double actDec[WHEEL_NUM_MAX];
 	for (uint32_t idx = 0; idx < WHEEL_NUM_MAX; idx++) {
-		actDec[idx] = wheelObj.setDec(idx, aDec_dpss);
+		actDec[idx] = wheelObj.setDec(idx, aDec_dpss * DEG2RAD);
 	}
 	bool isRet = wheelObj.transferSetData();
 	cout << " set Acc = " << aDec_dpss << "[deg/s^2]: ";
