@@ -5,7 +5,7 @@
 #include <vector>
 #include <cmath>
 
-#include "vehicle_controller/wheel.hpp"
+#include "slambot_controller/wheel.hpp"
 
 using namespace std;
 
