@@ -25,7 +25,7 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.778490050" name="デバッグ・レベル" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.714163084" name="インクルード・パス (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include/opencv-3.2.0-dev"/>
+									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include/opencv-3.3.1"/>
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/pcl-1.7"/>
 									<listOptionValue builtIn="false" value="/usr/include/eigen3"/>
@@ -227,7 +227,7 @@
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.2013183520" name="デバッグ・レベル" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.621357784" name="インクルード・パス (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include/opencv-3.2.0-dev"/>
+									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include/opencv-3.3.1"/>
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/pcl-1.7"/>
 									<listOptionValue builtIn="false" value="/usr/include/eigen3"/>
