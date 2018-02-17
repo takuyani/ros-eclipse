@@ -181,6 +181,8 @@
 									<listOptionValue builtIn="false" value="pcl_visualization"/>
 									<listOptionValue builtIn="false" value="pcl_sample_consensus"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="boost_thread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.372530620" name="ライブラリー検索パス (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/lib"/>
@@ -383,6 +385,8 @@
 									<listOptionValue builtIn="false" value="pcl_visualization"/>
 									<listOptionValue builtIn="false" value="pcl_sample_consensus"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="boost_thread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1053572034" name="ライブラリー検索パス (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/opt/ros/kinetic/lib"/>
